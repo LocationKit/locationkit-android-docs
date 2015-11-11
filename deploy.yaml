@@ -3,7 +3,7 @@ default:
   dest: 'android'
 
 production:
-  bucket: 'docs.locationkit.io'
+  bucket: 'docs-old.locationkit.io'
 
 development:
   bucket: 'docs-next.locationkit.io'

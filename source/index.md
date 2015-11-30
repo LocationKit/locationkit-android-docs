@@ -103,55 +103,60 @@ LocationKit registers a boot receiver and will automatically restart on device r
 </aside>
 
 ```java
+  private static final String API_KEY = "<API_KEY>"
   private Boolean mBound = false;
   private ILocationKitBinder mLocationKit;
   @Override
   protected void onResume() {
-    Intent i = new Intent(this, LocationKit.class);
+    Intent i = new Intent(this, LocationKitService.class);
     bindService(i, connection, Context.BIND_AUTO_CREATE);
   }
   @Override
+  protected void onPause() {
+        disconnectIfNeeded();
+        super.onPause();
+  }
+  @Override
   protected void onDestroy() {
-        if (mBound) {
-            try {
-                unbindService(connection);
-                mBound = false;
-            } catch (Exception e) {
-
-            }
-        }
+       	disconnectIfNeeded();
         super.onDestroy();
   }
-
-  protected ServiceConnection connection = new ServiceConnection() {
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-      mBound = true;
-      mLocationKit = (ILocationKitBinder)service;
-      try {
-          mLocationKit.startWithApiToken("f0838784beb72a13", mLocationListener);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-  }
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        mLocationKit = null;
-        mBound = false;
+    private void disconnectIfNeeded() {
+        if (mBound) {
+            mBound = false;
+            try {
+                this.unbindService(connection);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
- };
-    private ILocationKitEventListener mLocationListener = new ILocationKitEventListener() {
-    	@Override 
-    	public void onChangedActivityMode(LKActivityMode mode) {
-    		//detect new activty mode (e.g. LKActivityMode.STATIONARY)
-    	}
+    protected ServiceConnection connection = new ServiceConnection() {
         @Override
-        public void onStartVisit(LKVisit visit) {
-
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBound = true;
+            mLocationKit = (ILocationKitBinder) service;
+            try {
+                mLocationKit.startWithApiToken(API_KEY, mLocationListener);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
-        public void onEndVisit(LKVisit visit) {
+        public void onServiceDisconnected(ComponentName name) {
+            mLocationKit = null
+            mBound = false;
+        }
+    };
+    private ILocationKitEventListener mLocationListener = new ILocationKitEventListener() {
+        @Override
+        public void onStartVisit(LKVisit lkVisit) {
+            
+        }
+
+        @Override
+        public void onEndVisit(LKVisit lkVisit) {
 
         }
 
@@ -176,7 +181,17 @@ LocationKit registers a boot receiver and will automatically restart on device r
         }
 
         @Override
-        public void onError(Exception e, String message) {
+        public void onChangedActivityMode(LKActivityMode lkActivityMode) {
+
+        }
+
+        @Override
+        public void onError(Exception e, String s) {
+
+        }
+
+        @Override
+        public void onPermissionDenied(String s) {
 
         }
 
@@ -204,16 +219,6 @@ LocationKit registers a boot receiver and will automatically restart on device r
         public void onProviderDisabled(String provider) {
 
         }
-        @Override
-        public void onChangedActivityMode(LKActivityMode mode) {
-        }
-        /**
-        Invoked if Android Marshmallow permissions have disabled permissions.  
-        @permission is the name of the denied permission
-        */
-        @Override 
-       	public     void onPermissionDenied(String permission) {
-       	}
     };
 ```
 
@@ -392,8 +397,8 @@ mLocationKit.getCurrentLocation(new ILocationKitCallback<Location> callback() {
     }
 
     @Override
-    public void onReceivedData(final ILocationKitCallback<List<LKPlace>> data) {
-        //do something with data
+    public void onReceivedData(final  public void onReceivedData(Location location) {
+        //do something with location
     }
 });
 ```
@@ -431,7 +436,7 @@ repositories {
 	}
 }
 dependencies {
-	compile ('socialradar:locationkit:2.0.1+@aar') { transitive = true }
+	compile ('socialradar:locationkit:3.0.+@aar') { transitive = true }
 }
 ```
 
